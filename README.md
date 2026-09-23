@@ -1,5 +1,7 @@
 # Umoria
 
+> **Two-player browser branch:** see [setup, controls, multiplayer rules, and limitations](web/README.md). This experimental version runs the original engine with two independent characters in one shared dungeon.
+
 _The Dungeons of Moria_ is a single player dungeon simulation originally
 written by Robert Alan Koeneke, with its first public release in 1983.
 The game was originally developed using VMS Pascal before being ported to the

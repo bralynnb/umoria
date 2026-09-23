@@ -32,6 +32,14 @@ enum class Screen {
     Wrong,
 };
 
+struct TreasureHeap {
+    int16_t current_id = 0;
+    Inventory_t list[LEVEL_MAX_OBJECTS]{};
+};
+#ifdef MORIA_COOP
+extern TreasureHeap coop_treasure;
+#endif
+
 typedef struct Game_t {
     uint32_t magic_seed = 0; // Seed for initializing magic items (Potions, Wands, Staves, Scrolls, etc.)
     uint32_t town_seed = 0;  // Seed for town generation
@@ -56,10 +64,11 @@ typedef struct Game_t {
 
     vtype_t character_died_from = {'\0'}; // What the character died from: starvation, Bat, etc.
 
-    struct {
-        int16_t current_id = 0; // Current treasure heap ptr
-        Inventory_t list[LEVEL_MAX_OBJECTS]{};
-    } treasure;
+#ifdef MORIA_COOP
+    TreasureHeap &treasure = coop_treasure;
+#else
+    TreasureHeap treasure;
+#endif
 
     // Keep track of the state of the current screen (inventory, equipment, help, etc.).
     struct {

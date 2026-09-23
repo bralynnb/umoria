@@ -559,6 +559,9 @@ static void glyphOfWardingProtection(uint16_t creature_id, uint32_t move_bits, b
 
 static void monsterMovesOnPlayer(Monster_t const &monster, uint8_t creature_id, int monster_id, uint32_t move_bits, bool &do_move, bool &do_turn, uint32_t &rcmove, Coord_t coord) {
     if (creature_id == 1) {
+#ifdef MORIA_COOP
+        CoopTarget victim(true, coord, true);
+#endif
         // if the monster is not lit, must call monsterUpdateVisibility, it
         // may be faster than character, and hence could have
         // just moved next to character this same turn.
@@ -1323,6 +1326,9 @@ void updateMonsters(bool attack) {
             continue;
         }
 
+#ifdef MORIA_COOP
+        CoopTarget target(attack, monster.pos);
+#endif
         monster.distance_from_player = (uint8_t) coordDistanceBetween(py.pos, Coord_t{monster.pos.y, monster.pos.x});
 
         // Attack is argument passed to CREATURE

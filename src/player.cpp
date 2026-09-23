@@ -8,7 +8,9 @@
 #include "headers.h"
 
 // Player record for most player related info
+#ifndef MORIA_COOP
 Player_t py = Player_t{};
+#endif
 
 static void playerResetFlags() {
     py.flags.see_invisible = false;
@@ -658,7 +660,11 @@ void playerTakesHit(int damage, const char *creature_name_label) {
         game.total_winner = false;
     }
 
+#ifdef MORIA_COOP
+    dg.floor[py.pos.y][py.pos.x].creature_id = 0;
+#else
     dg.generate_new_level = true;
+#endif
 }
 
 // Searches for hidden things. -RAK-

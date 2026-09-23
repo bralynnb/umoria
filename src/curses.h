@@ -7,7 +7,9 @@
 
 // clang-format off
 
-#ifdef _WIN32
+#ifdef MORIA_COOP
+#include "coop_terminal.h"
+#elif defined(_WIN32)
   // this is defined in Windows and also in ncurses
   #undef KEY_EVENT
   #ifdef _MSVC_LANG

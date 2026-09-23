@@ -30,10 +30,16 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
     // NOTE: this will be overridden by the game save file.
     config::options::use_roguelike_keys = roguelike_keys;
 
+#ifdef MORIA_COOP
+    bool initialize_world = coopBegin();
+    if (initialize_world) {
+#endif
     priceAdjust();
 
     // Show the game splash screen
+#ifndef MORIA_COOP
     displaySplashScreen();
+#endif
 
     // Grab a random seed from the clock
     seedsInitialize(seed);
@@ -45,6 +51,12 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
     // Init the store inventories
     storeInitializeOwners();
 
+#ifdef MORIA_COOP
+        magicInitializeItemNames();
+        coopWorldReady();
+    }
+    displaySplashScreen();
+#endif
     // NOTE: base exp levels need initializing before loading a game
     playerInitializeBaseExperienceLevels();
 
@@ -116,7 +128,9 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
         generate = true;
     }
 
+#ifndef MORIA_COOP
     magicInitializeItemNames();
+#endif
 
     //
     // Begin the game
@@ -125,14 +139,23 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
     putString("Press ? for help", Coord_t{0, 63});
     printCharacterStatsBlock();
 
+#ifdef MORIA_COOP
+    coopJoinDungeon();
+#else
     if (generate) {
         generateCave();
     }
+#endif
 
     // Loop till dead, or exit
     while (!game.character_is_dead) {
         // Dungeon logic
+#ifdef MORIA_COOP
+        try { playDungeon(); }
+        catch (const CoopLevelChanged &) { continue; }
+#else
         playDungeon();
+#endif
 
         // check for eof here, see getKeyInput() in io.c
         // eof can occur if the process gets a HANGUP signal
@@ -148,7 +171,11 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
 
         // New level if not dead
         if (!game.character_is_dead) {
+#ifdef MORIA_COOP
+            coopGenerateLevel();
+#else
             generateCave();
+#endif
         }
     }
 
@@ -1051,7 +1078,13 @@ static void executeInputCommands(char &command, int &find_count) {
         if (game.command_count > 0) {
             game.use_last_direction = true;
         } else {
+#ifdef MORIA_COOP
+            coopSession().map_input = true;
+#endif
             last_input_command = getKeyInput();
+#ifdef MORIA_COOP
+            coopSession().map_input = false;
+#endif
 
             // Get a count for a command.
             int repeat_count = 0;
@@ -1455,6 +1488,11 @@ static void commandFlipWizardMode() {
 }
 
 static void commandSaveAndExit() {
+#ifdef MORIA_COOP
+    printMessage("Browser sessions stay in memory. Close the tab and reconnect to resume.");
+    game.player_free_turn = true;
+    return;
+#endif
     if (game.total_winner) {
         printMessage("You are a Total Winner,  your character must be retired.");
 
@@ -1638,6 +1676,13 @@ static void doWizardCommands(char command) {
 // Possibly the "setup" happens in the command, such as the food check/selection of playerEat().
 // The command then calls playerEat() in player_eat.cpp - passing the selected food `item_id`.
 static void doCommand(char command) {
+#ifdef MORIA_COOP
+    if (command == CTRL_KEY('W') || command == 'V') {
+        printMessage("Scores and wizard mode are unavailable in browser sessions.");
+        game.player_free_turn = true;
+        return;
+    }
+#endif
     bool do_pickup = moveWithoutPickup(&command);
 
     switch (command) {
@@ -2295,6 +2340,9 @@ static void playDungeon() {
 
     // Ensure we display the panel. Used to do this with a global var. -CJS-
     dg.panel.row = dg.panel.col = -1;
+#ifdef MORIA_COOP
+    dg.panel.top = dg.panel.bottom = dg.panel.left = dg.panel.right = 0;
+#endif
 
     // Light up the area around character
     dungeonResetView();
@@ -2319,6 +2367,9 @@ static void playDungeon() {
     // Loop until dead,  or new level
     // Exit when `dg.generate_new_level` and `eof_flag` are both set
     do {
+#ifdef MORIA_COOP
+        coopTurnBoundary();
+#endif
         // Increment turn counter
         dg.game_turn++;
 
@@ -2421,5 +2472,5 @@ static void playDungeon() {
         if (!dg.generate_new_level) {
             updateMonsters(true);
         }
-    } while (!dg.generate_new_level && (eof_flag == 0));
+    } while (!dg.generate_new_level && !game.character_is_dead && (eof_flag == 0));
 }

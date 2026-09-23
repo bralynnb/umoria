@@ -358,6 +358,10 @@ static void writeInventoryToFile(FILE *inv_file) {
 
 // Print the character to a file or device -RAK-
 bool outputPlayerCharacterToFile(char *filename) {
+#ifdef MORIA_COOP
+    printMessage("Character file export is unavailable in browser sessions.");
+    return false;
+#endif
     int fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0644);
     if (fd < 0 && errno == EEXIST) {
         if (getInputConfirmation("Replace existing file " + std::string(filename) + "?")) {

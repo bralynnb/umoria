@@ -12,11 +12,13 @@ static const char *stat_names[] = {
 static char blank_string[] = "                        ";
 
 // Track screen changes for inventory commands
+#ifndef MORIA_COOP
 bool screen_has_changed = false;
 
 bool message_ready_to_print;            // Set with first message
 vtype_t messages[MESSAGE_HISTORY_SIZE]; // Saved message history -CJS-
-int16_t last_message_id = 0;            // Index of last message held in saved messages array
+int16_t last_message_id = 0;
+#endif            // Index of last message held in saved messages array
 
 // Calculates current boundaries -RAK-
 static void panelBounds() {

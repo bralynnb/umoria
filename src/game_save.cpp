@@ -56,6 +56,9 @@ static uint32_t start_time; // time that play started
 
 // Set up prior to actual save, do the save, then clean up
 bool saveGame() {
+#ifdef MORIA_COOP
+    return false;
+#endif
     vtype_t input = {'\0'};
     std::string output;
 

@@ -169,9 +169,17 @@ int coordCorridorWallsNextTo(Coord_t const &coord) {
 
 // Returns symbol for given row, column -RAK-
 char caveGetTileSymbol(Coord_t const &coord) {
+#ifdef MORIA_COOP
+    if (coopOtherAt(coord) && py.flags.blind == 0 && los(py.pos, coord) &&
+        coordDistanceBetween(py.pos, coord) <= config::monsters::MON_MAX_SIGHT) return '&';
+#endif
     Tile_t const &tile = dg.floor[coord.y][coord.x];
 
-    if (tile.creature_id == 1 && ((py.running_tracker == 0) || config::options::run_print_self)) {
+    if (tile.creature_id == 1
+#ifdef MORIA_COOP
+        && coord.y == py.pos.y && coord.x == py.pos.x
+#endif
+        && ((py.running_tracker == 0) || config::options::run_print_self)) {
         return '@';
     }
 

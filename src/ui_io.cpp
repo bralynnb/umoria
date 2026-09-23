@@ -9,13 +9,15 @@
 #include "headers.h"
 #include "curses.h"
 
+#ifndef MORIA_COOP
 static bool curses_on = false;
 
 // Spare window for saving the screen. -CJS-
 static WINDOW *save_screen;
 
 int eof_flag = 0;        // Is used to signal EOF/HANGUP condition
-bool panic_save = false; // True if playing from a panic save
+bool panic_save = false;
+#endif // True if playing from a panic save
 
 // Set up the terminal into a suitable state -MRC-
 static void moriaTerminalInitialize() {
@@ -89,6 +91,9 @@ void terminalRestoreScreen() {
 }
 
 ssize_t terminalBellSound() {
+#ifdef MORIA_COOP
+    return 0;
+#endif
     putQIO();
 
     // The player can turn off beeps if they find them annoying.
@@ -268,10 +273,12 @@ void printMessage(const char *msg) {
 
             putString(" -more-", Coord_t{MSG_LINE, old_len});
 
+#ifndef MORIA_COOP
             char key;
             do {
                 key = getKeyInput();
             } while ((key != ' ') && (key != ESCAPE) && (key != '\n') && (key != '\r'));
+#endif
         } else {
             combine_messages = true;
         }
@@ -329,6 +336,9 @@ void printMessageNoCommandInterrupt(const std::string &msg) {
 // terminal, so that this operation can always be performed at
 // any input prompt. getKeyInput() never returns ^R.
 char getKeyInput() {
+#ifdef MORIA_COOP
+    return coopReadKey();
+#endif
     putQIO();               // Dump IO buffer
     game.command_count = 0; // Just to be safe -CJS-
 
@@ -521,6 +531,9 @@ void waitForContinueKey(int line_number) {
 // a certain point, sleep for a second. There would need to be a way of resetting
 // the count, with a call made for commands like run or rest.
 bool checkForNonBlockingKeyPress(int microseconds) {
+#ifdef MORIA_COOP
+    return false;
+#endif
 #ifdef _WIN32
     (void) microseconds;
 

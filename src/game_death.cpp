@@ -120,6 +120,9 @@ static void kingly() {
 // What happens upon dying -RAK-
 // Handles the gravestone and top-twenty routines -RAK-
 void endGame() {
+#ifdef MORIA_COOP
+    coopFinish();
+#endif
     printMessage(CNIL);
 
     // flush all input

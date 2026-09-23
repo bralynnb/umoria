@@ -11,7 +11,9 @@
 // holds the previous rnd state
 static uint32_t old_seed;
 
+#ifndef MORIA_COOP
 Game_t game = Game_t{};
+#endif
 
 // gets a new random seed for the random number generator
 void seedsInitialize(uint32_t seed) {
@@ -321,6 +323,9 @@ bool getAllDirections(const char *prompt, int &direction) {
 
 // Restore the terminal and exit
 void exitProgram() {
+#ifdef MORIA_COOP
+    coopFinish();
+#endif
     flushInputBuffer();
     terminalRestore();
     exit(0);
@@ -328,6 +333,9 @@ void exitProgram() {
 
 // Abort the program with a message displayed on the terminal.
 void abortProgram(const char *msg) {
+#ifdef MORIA_COOP
+    coopFinish();
+#endif
     flushInputBuffer();
     terminalRestore();
 
