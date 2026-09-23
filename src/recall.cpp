@@ -10,9 +10,15 @@
 // Monster memories
 Recall_t creature_recall[MON_MAX_CREATURES];
 
+#ifndef MORIA_COOP
 static vtype_t roff_buffer = {'\0'};        // Line buffer.
+#endif
+#ifndef MORIA_COOP
 static char *roff_buffer_pointer = nullptr; // Pointer into line buffer.
+#endif
+#ifndef MORIA_COOP
 static int roff_print_line;                 // Place to print line now being loaded.
+#endif
 
 #define plural(c, ss, sp) ((c) == 1 ? (ss) : (sp))
 

@@ -71,3 +71,6 @@
 #include "store.h"
 #include "treasure.h"
 #include "wizard.h"
+#ifdef MORIA_COOP
+#include "coop.h"
+#endif

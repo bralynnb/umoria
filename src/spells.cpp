@@ -459,7 +459,11 @@ bool spellSurroundPlayerWithTraps() {
             // strange situations, e.g. falling through a trap door while
             // trying to rest, setting off a falling rock trap and ending
             // up under the rock.
-            if (coord.y == py.pos.y && coord.x == py.pos.x) {
+            if ((coord.y == py.pos.y && coord.x == py.pos.x)
+#ifdef MORIA_COOP
+                || coopOtherAt(coord)
+#endif
+            ) {
                 continue;
             }
 
@@ -494,7 +498,11 @@ bool spellSurroundPlayerWithDoors() {
     for (coord.y = py.pos.y - 1; coord.y <= py.pos.y + 1; coord.y++) {
         for (coord.x = py.pos.x - 1; coord.x <= py.pos.x + 1; coord.x++) {
             // Don't put a door under the player!
-            if (coord.y == py.pos.y && coord.x == py.pos.x) {
+            if ((coord.y == py.pos.y && coord.x == py.pos.x)
+#ifdef MORIA_COOP
+                || coopOtherAt(coord)
+#endif
+            ) {
                 continue;
             }
 
@@ -1052,6 +1060,9 @@ void spellBreath(Coord_t coord, int monster_id, int damage_hp, int spell_type, c
                             }
                         }
                     } else if (tile.creature_id == 1) {
+#ifdef MORIA_COOP
+                        CoopTarget victim(true, location, true);
+#endif
                         int damage = (damage_hp / (coordDistanceBetween(location, coord) + 1));
 
                         // let's do at least one point of damage
@@ -1973,7 +1984,11 @@ void spellEarthquake() {
 
     for (coord.y = py.pos.y - 8; coord.y <= py.pos.y + 8; coord.y++) {
         for (coord.x = py.pos.x - 8; coord.x <= py.pos.x + 8; coord.x++) {
-            if ((coord.y != py.pos.y || coord.x != py.pos.x) && coordInBounds(coord) && randomNumber(8) == 1) {
+            if ((coord.y != py.pos.y || coord.x != py.pos.x)
+#ifdef MORIA_COOP
+                && !coopOtherAt(coord)
+#endif
+                && coordInBounds(coord) && randomNumber(8) == 1) {
                 Tile_t &tile = dg.floor[coord.y][coord.x];
 
                 if (tile.treasure_id != 0) {
@@ -2267,7 +2282,11 @@ void spellDestroyArea(Coord_t coord) {
                     int distance = coordDistanceBetween(spot, coord);
 
                     // clear player's spot, but don't put wall there
-                    if (distance == 0) {
+                    if (distance == 0
+#ifdef MORIA_COOP
+                        || coopOtherAt(spot)
+#endif
+                    ) {
                         replaceSpot(spot, 1);
                     } else if (distance < 13) {
                         replaceSpot(spot, randomNumber(6));

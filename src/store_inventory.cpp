@@ -22,6 +22,9 @@ static int32_t getPickShovelBuyPrice(Inventory_t const &item);
 
 // Initialize and up-keep the store's inventory. -RAK-
 void storeMaintenance() {
+#ifdef MORIA_COOP
+    if (coopShopBusy()) return;
+#endif
     for (int store_id = 0; store_id < MAX_STORES; store_id++) {
         Store_t &store = stores[store_id];
 

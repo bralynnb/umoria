@@ -224,10 +224,18 @@ bool los(Coord_t from, Coord_t to) {
   dungeon y = py.pos.y + los_fyx * (ray x) + los_fyy * (ray y)
   dungeon x = py.pos.x + los_fxx * (ray x) + los_fxy * (ray y)
 */
+#ifndef MORIA_COOP
 static int los_fxx, los_fxy, los_fyx, los_fyy;
+#endif
+#ifndef MORIA_COOP
 static int los_num_places_seen;
+#endif
+#ifndef MORIA_COOP
 static bool los_hack_no_query;
+#endif
+#ifndef MORIA_COOP
 static int los_rocks_and_objects;
+#endif
 
 // Intended to be indexed by dir/2, since is only
 // relevant to horizontal or vertical directions.

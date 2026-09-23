@@ -356,6 +356,10 @@ static bool playerRandomMovement(int dir) {
 static void carry(Coord_t coord, bool pickup) {
     Inventory_t &item = game.treasure.list[dg.floor[coord.y][coord.x].treasure_id];
 
+#ifdef MORIA_COOP
+    const int original_id = dg.floor[coord.y][coord.x].treasure_id;
+    const Inventory_t original_item = item;
+#endif
     int tile_flags = game.treasure.list[dg.floor[coord.y][coord.x].treasure_id].category_id;
 
     if (tile_flags > TV_MAX_PICK_UP) {
@@ -406,6 +410,15 @@ static void carry(Coord_t coord, bool pickup) {
             pickup = getInputConfirmation("Exceed your weight limit to pick up " + std::string(description));
         }
 
+#ifdef MORIA_COOP
+        // A companion's spell or a monster may remove/replace an item while
+        // this character is answering the pickup/weight prompt.
+        if (dg.floor[coord.y][coord.x].treasure_id != original_id ||
+            memcmp(&item, &original_item, sizeof(item)) != 0) {
+            printMessage("The item changed while you were deciding. Try again.");
+            return;
+        }
+#endif
         // Attempt to pick up an object.
         if (pickup) {
             int locn = inventoryCarryItem(item);
@@ -436,6 +449,13 @@ void playerMove(int direction, bool do_pickup) {
         return;
     }
 
+#ifdef MORIA_COOP
+    if (coopOtherAt(coord)) {
+        printMessage("Your companion is standing there.");
+        game.player_free_turn = true;
+        return;
+    }
+#endif
     Tile_t const &tile = dg.floor[coord.y][coord.x];
     Monster_t const &monster = monsters[tile.creature_id];
 

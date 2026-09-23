@@ -111,9 +111,15 @@
 
 static int cycle[] = {1, 2, 3, 6, 9, 8, 7, 4, 1, 2, 3, 6, 9, 8, 7, 4, 1};
 static int chome[] = {-1, 8, 9, 10, 7, -1, 11, 6, 5, 4};
+#ifndef MORIA_COOP
 static bool find_openarea, find_breakright, find_breakleft;
+#endif
+#ifndef MORIA_COOP
 static int find_prevdir;
+#endif
+#ifndef MORIA_COOP
 static int find_direction; // Keep a record of which way we are going.
+#endif
 
 // Do we see a wall? Used in running. -CJS-
 static bool playerCanSeeDungeonWall(int dir, Coord_t coord) {

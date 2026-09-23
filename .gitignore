@@ -78,3 +78,9 @@ compile_commands.json
 *.zip
 
 .DS_Store
+
+/build-web/
+/build/
+__pycache__/
+
+/saves/

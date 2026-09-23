@@ -151,6 +151,9 @@ bool stringToNumber(const char *str, int &number) {
 }
 
 uint32_t getCurrentUnixTime() {
+#ifdef MORIA_COOP
+    return coopClock();
+#endif
     return static_cast<uint32_t>(time(nullptr));
 }
 

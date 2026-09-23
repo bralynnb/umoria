@@ -1,0 +1,6 @@
+.git
+build
+build-web
+__pycache__
+*.zip
+saves

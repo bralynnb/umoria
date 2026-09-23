@@ -8,7 +8,9 @@
 #include "headers.h"
 
 // Save the store's last increment value.
+#ifndef MORIA_COOP
 static int16_t store_last_increment;
+#endif
 
 static bool storeNoNeedToBargain(Store_t const &store, int32_t min_price);
 static void storeUpdateBargainingSkills(Store_t &store, int32_t price, int32_t min_price);
@@ -1095,6 +1097,10 @@ static bool storeSellAnItem(int store_id, int &current_top_item_id) {
 
 // Entering a store -RAK-
 void storeEnter(int store_id) {
+#ifdef MORIA_COOP
+    CoopStoreGuard store_guard(store_id);
+    if (!store_guard.acquired) { printMessage("Your companion is using this shop. Try again shortly."); return; }
+#endif
     Store_t const &store = stores[store_id];
 
     if (store.turns_left_before_closing >= dg.game_turn) {
