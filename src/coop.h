@@ -38,6 +38,7 @@ struct CoopSession {
 struct CoopLevelChanged {};
 CoopSession &coopSession();
 int coopSlot();
+uint32_t coopClock();
 bool coopBegin();
 void coopWorldReady();
 void coopJoinDungeon();

@@ -8,7 +8,9 @@ RUN useradd --create-home --uid 10001 moria
 WORKDIR /app
 COPY --from=build /app/build-web ./build-web
 COPY web ./web
+RUN mkdir -p /app/saves && chown moria:moria /app/saves
+VOLUME ["/app/saves"]
 USER moria
-ENV HOST=0.0.0.0 PORT=8080 MAX_ROOMS=8
+ENV HOST=0.0.0.0 PORT=8080 MAX_ROOMS=8 SAVE_DIR=/app/saves
 EXPOSE 8080
 CMD ["python3", "web/server.py"]

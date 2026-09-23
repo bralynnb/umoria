@@ -1489,7 +1489,7 @@ static void commandFlipWizardMode() {
 
 static void commandSaveAndExit() {
 #ifdef MORIA_COOP
-    printMessage("Browser sessions stay in memory. Close the tab and reconnect to resume.");
+    printMessage("Progress saves automatically. Keep your personal resume link to return.");
     game.player_free_turn = true;
     return;
 #endif

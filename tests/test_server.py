@@ -6,6 +6,7 @@ from pathlib import Path
 import socket
 import subprocess
 import time
+import tempfile
 import unittest
 import urllib.request
 import urllib.error
@@ -17,13 +18,19 @@ class BrowserServerTest(unittest.TestCase):
         with socket.socket() as sock:
             sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
         cls.url=f'http://127.0.0.1:{port}'
+        cls.storage=tempfile.TemporaryDirectory()
+        cls.port=port
+        cls.start_server()
+    @classmethod
+    def start_server(cls):
         cls.server=subprocess.Popen(['python3','web/server.py'],cwd=ROOT,
-            env={**os.environ,'PORT':str(port)},stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            env={**os.environ,'PORT':str(cls.port),'SAVE_DIR':cls.storage.name},stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         assert 'Umoria co-op' in cls.server.stdout.readline()
     @classmethod
     def tearDownClass(cls):
         cls.server.terminate();cls.server.wait(timeout=5)
         cls.server.stdout.close();cls.server.stderr.close()
+        cls.storage.cleanup()
     def api(self,path,body=None,token=None,origin=None):
         headers={'Content-Type':'application/json'}
         if token:headers['Authorization']='Bearer '+token
@@ -64,6 +71,23 @@ class BrowserServerTest(unittest.TestCase):
             results=list(pool.map(lambda p:self.api(base+'/input',{'key':ord('5')},p['token']),[a,b]))
         self.assertTrue(all(code==200 for code,_ in results))
         self.assertEqual(self.api(base+'/state',token=a['token'])[1]['self']['name'],'Alice')
+        # Save in the middle of a modal inventory screen, kill the HTTP host,
+        # and reconstruct the engine from its durable action journal.
+        time.sleep(.06)
+        self.assertEqual(self.api(base+'/input',{'key':ord('i')},a['token'])[0],200)
+        before_a=self.api(base+'/state',token=a['token'])[1]
+        before_b=self.api(base+'/state',token=b['token'])[1]
+        self.server.kill();self.server.wait(timeout=5)
+        self.server.stdout.close();self.server.stderr.close()
+        type(self).start_server()
+        after_a=self.api(base+'/state',token=a['token'])[1]
+        after_b=self.api(base+'/state',token=b['token'])[1]
+        self.assertEqual(after_a['self'],before_a['self'])
+        self.assertEqual(after_b['self'],before_b['self'])
+        self.assertEqual(after_a['saved'],before_a['saved'])
+        self.assertEqual(self.api(base+'/input',{'key':27},a['token'])[0],200)
+        self.assertEqual(self.api(base+'/join',{})[0],400)
+
     def test_health_and_assets(self):
         self.assertEqual(self.api('/health')[1],{'ok':True})
         for path in ['/','/app.js','/style.css']:

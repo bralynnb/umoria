@@ -13,6 +13,8 @@ static bool initialized=false, generated=false;
 static ucontext_t scheduler;
 static int shop_owner[6]={-1,-1,-1,-1,-1,-1};
 static uint32_t seed=0, town_seed=0, magic_seed=0;
+static uint32_t session_clock=1700000000;
+uint32_t coopClock() {return session_clock;}
 
 CoopSession &coopSession() {return sessions[active];}
 int coopSlot() {return active;}
@@ -163,6 +165,7 @@ static void emit() {
         auto &s=sessions[i];
         if(i)std::cout<<',';
         std::cout<<"{\"joined\":"<<(s.joined?"true":"false")<<",\"finished\":"<<(s.finished?"true":"false")
+                 <<",\"automatic\":"<<((!s.finished && s.joined && (s.player.flags.rest || s.player.running_tracker || s.state.command_count || s.player.flags.paralysis))?"true":"false")
                  <<",\"name\":"<<jsonString(s.player.misc.name)<<",\"hp\":"<<s.player.misc.current_hp
                  <<",\"x\":"<<s.player.pos.x<<",\"y\":"<<s.player.pos.y<<",\"gold\":"<<s.player.misc.au
                  <<",\"screen\":"<<jsonString(std::string(s.window.cells.begin(),s.window.cells.end()))<<'}';
@@ -172,6 +175,7 @@ static void emit() {
 }
 int main(int argc,char **argv) {
     if(argc>1) seed=uint32_t(std::strtoul(argv[1],nullptr,10));
+    if(argc>2) session_clock=uint32_t(std::strtoul(argv[2],nullptr,10));
     std::string line;
     while(std::getline(std::cin,line)) {
         std::istringstream in(line); int slot,key;

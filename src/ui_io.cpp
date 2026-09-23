@@ -570,6 +570,10 @@ bool checkForNonBlockingKeyPress(int microseconds) {
 
 // Find a default user name from the system.
 void getDefaultPlayerName(char *buffer) {
+#ifdef MORIA_COOP
+    strcpy(buffer, "Adventurer");
+    return;
+#endif
     // Gotta have some name
     const char *default_name = "X";
 

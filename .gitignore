@@ -82,3 +82,5 @@ compile_commands.json
 /build-web/
 /build/
 __pycache__/
+
+/saves/

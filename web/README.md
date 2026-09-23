@@ -30,8 +30,13 @@ change. Do not run this as root.
 
 ```sh
 docker build -t umoria-coop .
-docker run --rm -p 8080:8080 umoria-coop
+docker run --rm -p 8080:8080 -v moria-saves:/app/saves umoria-coop
 ```
+
+`SAVE_DIR` defaults to `./saves` locally and `/app/saves` in the container. Back up
+that directory (including SQLite WAL files while running) or stop the server
+before copying `rooms.sqlite3`. Hosting must attach a persistent writable volume
+at `SAVE_DIR`; an ephemeral deployment filesystem does not survive redeployment.
 
 `PORT` defaults to 8080. `MAX_ROOMS` defaults to 8, limiting engine processes.
 The image runs as an unprivileged user. The supplied HTTP server is a small
@@ -65,11 +70,19 @@ companion. Native ASCII art and the 80×24 layout are retained.
 - One player uses a given shop at a time, so a suspended haggle cannot refer to an
   item the other player has already bought. Other shops remain available.
 - Long messages automatically continue; the original message history remains.
-- **No durable multiplayer saves yet.** Rooms persist only in server memory,
-  expire after 30 minutes without client activity, and disappear on server restart.
-  Single-player saves and score files are not used. Ctrl-X explains reconnecting
-  instead of writing an incompatible save file. File export and wizard mode are
-  disabled in browser sessions. Game options are currently room-wide.
+- **Automatic durable saves:** each accepted input and automatic turn is committed
+  to a SQLite action journal before the response is acknowledged. The seeded
+  engine and recorded action order reconstruct both players, including open
+  menus, after a restart. Idle rooms suspend after 30 minutes; their saves remain.
+  Recovery requires the same engine binary. Version mismatches preserve the save
+  and refuse to load it rather than silently changing a run. Long runs take longer
+  to replay because this initial implementation has no compact checkpoints.
+- Use **Copy my resume link** to return from a new browser or tab. Keep it private:
+  it contains the capability to control your character. Invitation links never
+  contain that token. The resume token stays in the URL fragment, is removed from
+  the address bar on arrival, and is stored in the tab session.
+- Legacy single-player save/score formats are not used. Ctrl-X explains browser
+  reconnection. File export and wizard mode are disabled. Options are room-wide.
 - Native spell behavior is retained where possible; terrain effects avoid burying
   the companion. Monster breath damage is routed to each affected player.
 
@@ -85,6 +98,7 @@ Do not merge it into a release branch as a verified complete clone.
 make -f web/engine.mk build-web/engine-tests
 (cd build-web && ./engine-tests)
 python3 tests/test_server.py
+python3 tests/test_replay.py
 ```
 
 The engine tests execute original commands through interleaved player stacks:
@@ -92,7 +106,9 @@ character creation in either completion order, shared world, movement, collision
 independent inventories, menu concurrency, dropped-item pickup, monster targeting,
 shop ownership, level change with a pending menu, and independent death.
 HTTP tests run two simultaneous clients and check room capacity, private session
-tokens, invalid input rejection, cross-origin rejection, and reconnection.
+tokens, invalid input rejection, cross-origin rejection, and exact recovery after
+killing/restarting the server during a menu. Recovery tests cover automatic turns,
+a simulated failed durable write, and preserving incompatible-version saves.
 
 ## Implementation
 

@@ -1,8 +1,12 @@
 'use strict';
 const $ = id => document.getElementById(id);
 let room = new URLSearchParams(location.hash.slice(1)).get('room');
-let token = room && sessionStorage.getItem('moria:' + room);
-let playing = false, busy = false, queue = [], timer;
+let token = new URLSearchParams(location.hash.slice(1)).get('resume') || (room && sessionStorage.getItem('moria:' + room));
+if(room && token) {
+  sessionStorage.setItem('moria:'+room,token);
+  history.replaceState(null,'', '/#'+new URLSearchParams({room}));
+}
+let playing = false, busy = false, queue = [], timer, latestSaved = -1;
 const notice = text => { $('notice').textContent = text; };
 async function request(path, body) {
   const response = await fetch(path, {method: body === undefined ? 'GET' : 'POST',
@@ -13,14 +17,16 @@ async function request(path, body) {
   return data;
 }
 function render(data) {
+  if(data.saved < latestSaved) return;
+  latestSaved = data.saved;
   const screen=data.self.screen; const rows=[];
   for(let i=0;i<24;i++) rows.push(screen.slice(i*80,(i+1)*80));
   $('terminal').textContent=rows.join('\n');
-  $('room-status').textContent=`Player ${data.slot+1} · ${data.depth ? 'Depth '+(data.depth*50)+' feet' : 'Town'} · Turn ${data.turn}`;
+  $('room-status').textContent=`Player ${data.slot+1} · ${data.depth ? 'Depth '+(data.depth*50)+' feet' : 'Town'} · Turn ${data.turn} · Saved`;
   $('party').textContent=data.players.map((p,i)=>`P${i+1} ${p.name || 'Adventurer'} — ${p.finished?'finished':!p.connected?'away / waiting':!p.joined?'creating character':p.hp+' HP'}`).join('    /    ');
 }
 async function poll() {
-  try {render(await request(`/api/rooms/${room}/state`)); if(!busy) notice('');}
+  try {render(await request(`/api/rooms/${room}/state`));}
   catch(error) {notice(error.message);}
   timer=setTimeout(poll,300);
 }
@@ -52,6 +58,12 @@ $('invite').onclick=async()=>{
   const url=location.origin+'/#'+new URLSearchParams({room});
   try {await navigator.clipboard.writeText(url);notice('Invitation copied. Send it to your companion.');}
   catch {notice('Invitation: '+url);}
+  $('terminal').focus();
+};
+$('resume').onclick=async()=>{
+  const url=location.origin+'/#'+new URLSearchParams({room,resume:token});
+  try {await navigator.clipboard.writeText(url);notice('Personal resume link copied. Keep it private: it controls your character.');}
+  catch {notice('Personal resume link (keep private): '+url);}
   $('terminal').focus();
 };
 for(const button of document.querySelectorAll('[data-key]')) button.onclick=()=>{send(Number(button.dataset.key));$('terminal').focus();};
